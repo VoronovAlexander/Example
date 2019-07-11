@@ -1,0 +1,72 @@
+  version: '3'
+
+  services:
+
+    nodejs:
+      container_name: nodejs
+      image: node:10.16.0
+      working_dir: /home/nodejs
+      command: npm run start
+      volumes:
+        - ./nodejs:/home/nodejs
+      depends_on:
+        - mysqldb
+        - redisdb
+      # ports:
+      #   - 8080:8080
+
+    lumen:
+      container_name: lumen
+      image: westside072/laravel-php-7.2:latest
+      restart: always
+      working_dir: /home/lumen
+      command: ./start.sh
+      volumes:
+        - ./lumen:/home/lumen
+      depends_on:
+        - mysqldb
+        - redisdb
+      ports: 
+        - 8080:8080
+
+    queue:
+      container_name: queue
+      image: westside072/laravel-php-7.2:latest
+      restart: always
+      working_dir: /home/lumen
+      command: php artisan queue:work
+      volumes:
+        - ./lumen:/home/lumen
+      depends_on:
+        - mysqldb
+        - redisdb
+        - lumen
+        
+    mysqldb:
+      container_name: mysqldb
+      image: mysql:5.7
+      restart: always
+      environment:
+        - MYSQL_ROOT_PASSWORD=rootpassword
+        - MYSQL_DATABASE=test
+        - MYSQL_USER=test
+        - MYSQL_PASSWORD=test
+      volumes:
+        - ./mysql-data:/var/lib/mysql
+
+    adminer:
+      container_name: adminer
+      image: adminer:latest
+      restart: always
+      ports:
+        - 8005:8080
+      depends_on:
+        - mysqldb
+
+    redisdb:
+      container_name: redisdb
+      image: redis
+      restart: always
+      volumes:
+        - ./redis-data:/data
+    
